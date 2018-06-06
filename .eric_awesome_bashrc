@@ -1,0 +1,568 @@
+# BASHRC SILLY RULES ARE THE FOLLOWING:
+# https://github.com/justinmk/config/blob/master/.bashrc#L1-L6
+# "the best way to hadnle it is to do everything in .bashrc, and source .bashrc
+# from .bash_profile, but abort .bashrc if non-interactive"
+# TODO: Get settings from there
+
+# Bash sourcing rules:
+# In interactive mode, [bash shells] accept input typed from the keyboard. When
+# executing non-interactively, [bash shells] execute commands read from a file.
+# A login shell is the first process opened under your used ID
+
+# e.g. SSH: - login interactive shell
+# e.g. opening a terminal from a window manager: - non-login interactive shell
+# e.g. bash script as a command to SSH: - login non-interactive shell
+# e.g. running a bash script locally: - non-login non-interactive shell
+
+# Login shell sourcing rules:
+# /etc/profile then *only the first one it finds* of the following:
+#   - ~/.bash_profile
+#   - ~/.bash_login
+#   - ~/.profile
+
+# Interactive non-login sourcing rules:
+# *Only* reads ~/.bashrc
+
+# The idea is interactive shells started at login reads in a "global"
+# environment, then all subsequent interactive shells use ~/.bashrc
+
+# However it's far more typical that you want ~/.bashrc sourced even on a login
+# shell. The manual suggests the following in ~/.bash_profile: 
+# if [ -f ~/.bashrc ]; then . ~/.bashrc; fi
+
+# If you start bash with the 'sh' command it tries to ignore .bashrc rules and
+# skip the ".bash*" resource files altogether and use /etc/profile and .profile
+# instead
+
+# **** LOOK HERE ****
+# XXX: REMOVE THIS SILLINESS IF YOU ARE ON LITERALLY ANY OTHER NETWORK
+# XXX: ALSO SOMETIMES THIS CRAPS OUT
+# export http_proxy=http://webproxy.uhnresearch.ca:3128/ 
+
+### General export or not to export rules:
+# If a program running from this environment needs a variable, export it
+# If a program doesn't (e.g. shell variables like PS1, PROMPT_COMMAND, etc), do
+# not export it, just set it here. This will be loaded by every interactive
+# (and probably non-interactive if sourced from .bash_profile) shell.
+
+# Fancy prompt settings
+RESET="\[\017\]"
+NORMAL="\[\033[0m\]"
+RED="\[\033[31;1m\]"
+
+# Replace with cat .hg/branch? - would be much faster?
+# Wouldn't work in subdirectories...
+function hg_branch() {
+    local branchName=$(hg branch 2> /dev/null)
+    if [[ -n "$branchName" ]]
+    then
+        echo "on $branchName"
+    else
+        false
+    fi
+    # local hg_branch_file = ".hgrc/branch"
+    # if [[ -e .hgrc/branch ]]
+    # then
+    #     cat .hgrc/branch
+    # fi
+}
+
+function conda_env_prompt() {
+    if [[ -n $CONDA_PREFIX ]]
+    then
+        conda_env=`basename $CONDA_PREFIX`
+        conda_env="(${conda_env})"
+        echo $conda_env' '
+    else
+        false
+    fi
+}
+
+# Automatically check working window size after every command
+shopt -s checkwinsize
+# Change to a directory if only the directory is specified (no cd needed)
+shopt -s autocd
+
+#function __host_select() {
+#    local hostname=$(hostname -s)
+#    if [[ "$hostname" = "mordor" ]]
+#    then
+#        echo "${RED}$hostname${NORMAL}"
+#    else
+#        echo "$hostname"
+#    fi
+#}
+
+#SMILEY=":)"
+#FROWNY=":("
+#SELECT="if [ \$? = 0 ]; then echo \"${SMILEY}\"; else echo \"${FROWNY}\"; fi"
+ERROR_STATUS_SMILEY="if [ \$? = 0 ]; then echo \":)\"; else echo \":(\"; fi"
+
+# create a $fill of all screen width minus the time string and a space:
+# let fillsize=${COLUMNS}-9
+# TODO: Renable this
+# export PS1='$fill \t\n'"${RESET}\u@\h\`${ERROR_STATUS_SMILEY}\` \w \$(hg_branch)\n$ "
+
+#export PS1="${RESET}${YELLOW}\u@\h${NORMAL} \`${SELECT}\` ${YELLOW}\w $(__git_ps1) >${NORMAL} "
+#export PS1="\u@\h: \w \$(hg_branch)\n$ "
+#export PS1="\u@\h: \w\n$ "
+
+fill="--- "
+# from https://github.com/emilis/emilis-config/blob/master/.bash_ps1
+function prompt_command {
+
+ let fillsize=$(tput cols)-9
+ fill=""
+ while [ "$fillsize" -gt "0" ]
+ do
+ fill="-${fill}" # fill with underscores to work on
+ let fillsize=${fillsize}-1
+ done
+
+ # If this is an xterm set the title to user@host:dir
+ # case "$TERM" in
+ # xterm*|rxvt*)
+ # bname=`basename "${PWD/$HOME/~}"`
+ # echo -ne "\033]0;${bname}: ${USER}@${HOSTNAME}: ${PWD/$HOME/~}\007"
+ # ;;
+ # *)
+ # ;;
+ # esac
+
+}
+PROMPT_COMMAND=prompt_command
+
+# See https://unix.stackexchange.com/questions/18212/bash-history-ignoredups-and-erasedups-setting-conflict-with-common-history/18443#18443
+# Remove all duplicates in history and keep it synced across all terminals
+shopt -s histappend
+# Erase duplicates in bash history
+# Ignore commands with leading space
+# ignoredups only ignores _consecutive_ duplicates
+HISTCONTROL=ignoreboth:erasedups
+HISTIGNORE='startx:exit:cd *:ls *:rm *:man *:echo *:bg:fg:history*:f:fd'
+# Unlimited bash history (may want to truncate ocassionally?)
+HISTFILESIZE=
+HISTSIZE=
+HISTTIMEFORMAT="%F %T: "
+# PROMPT_COMMAND="history -n; history -w; history -c; history -r; $PROMPT_COMMAND"
+
+PS1='$fill \t\n'"${RESET}\$(conda_env_prompt)\u@\h\`${ERROR_STATUS_SMILEY}\` \w \$(hg_branch)\n$ "
+#export PS1="${RESET}${YELLOW}\u@\h${NORMAL} \`${SELECT}\` ${YELLOW}\w $(__git_ps1) >${NORMAL} "
+#export PS1="\u@\h: \w \$(hg_branch)\n$ "
+#export PS1="\u@\h: \w\n$ "
+
+# TODO: Put $TERM checking earlier?
+# NB: gnome-terminal reports xterm-256color which is technically incorrect and
+# behaves strangely with certain programs. Older versions of gnome-terminal set
+# COLORTERM. Newer versions set VTE_VERSION
+if [[ $VTE_VERSION -ge 3803 ]]
+then
+    # gnome-256color is equivalent to vte-256color
+    export TERM=gnome-256color
+    # initialize this terminal with these new terminfo settings
+    tput init
+    tput reset
+fi
+
+# bash completion (fix when not sourced for some reason)
+if [ -f /usr/local/etc/bash_completion ]; then
+    source /usr/local/etc/bash_completion
+elif [ -f /usr/share/bash-completion/bash_completion ]; then
+    source /usr/share/bash-completion/bash_completion
+elif [ -f /etc/bash_completion ] && ! shopt -oq posix; then
+    source /etc/bash_completion
+fi
+
+# TODO: Get a different colored prompt for clusters (check hostname)
+
+# Path and Library Path settings:
+# Note on this machine /usr/local refers to the networked shared programs and
+# libraries. These are very old and Alvaro says not to use them when possible
+# and to maybe remove references to them altogether where possible.
+# So they definitely should not come first in the path before our own installed stuff
+
+# From default .cshrc
+#case Linux:
+#	setenv LD_LIBRARY_PATH /usr/local/lib:/lib:/usr/lib:/usr/X11R6/lib
+#	set path = ( /usr/local/bin /usr/bin /bin /usr/X11R6/bin /etc /usr/etc /usr/sbin /sbin . $path )
+#	breaksw
+
+# LS Colors
+LS_COLORS="rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=01;05;37;41:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arj=01;31:*.taz=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.zip=01;31:*.z=01;31:*.Z=01;31:*.dz=01;31:*.gz=01;31:*.lz=01;31:*.xz=01;31:*.bz2=01;31:*.tbz=01;31:*.tbz2=01;31:*.bz=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.rar=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.jpg=01;35:*.jpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.axv=01;35:*.anx=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=01;36:*.au=01;36:*.flac=01;36:*.mid=01;36:*.midi=01;36:*.mka=01;36:*.mp3=01;36:*.mpc=01;36:*.ogg=01;36:*.ra=01;36:*.wav=01;36:*.axa=01;36:*.oga=01;36:*.spx=01;36:*.xspf=01;36:"
+alias ls="ls --color=auto"
+
+# Our version
+# X11R6 doesn't exit on this machine
+# Remove /usr/local/lib <-- ancient libraries
+unset LD_LIBRARY_PATH
+# export LD_LIBRARY_PATH="/lib64:/lib:/usr/lib64:/usr/lib"
+export C_INCLUDE_PATH=""
+export LIBRARY_PATH=""
+export PKG_CONFIG_PATH=""
+
+# Default as-is in bash:
+# /usr/lib64/qt-3.3/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin
+# There is no /usr/local/sbin
+# Put /usr/local/bin dead last
+export PATH="/usr/bin:/bin:/etc:/usr/etc:/usr/sbin:/sbin:/usr/lib64/qt-3.3/bin:/usr/local/bin"
+
+# Editor settings
+# FIX THIS? -> Use gvim alias (gvir) to edit in existing vim instance
+export VISUAL="nvim"
+export EDITOR="nvim"
+
+# Architecture directory name - useful for local directory naming
+export ARCH="$(uname)-$(uname -m)"
+
+function prepend_to_path {
+    if [[ ! "$PATH" == *${1}* ]]; then
+      export PATH="${1}:${PATH}"
+    fi
+}
+
+function add_to_library_path {
+    export LD_LIBRARY_PATH=${1}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+}
+
+# Add scripts to PATH
+prepend_to_path "/scratch/arch/${ARCH}/bin:/scratch/bin:${HOME}/bin"
+# PATH="/scratch/arch/${ARCH}/bin:/scratch/bin:${HOME}/bin:${PATH}"
+
+## TODO: ALL ALL BELOW BACK ONE BY ONE
+## Add Brew to PATH
+#export BREW_DIR="/scratch/linuxbrew"
+#export PATH="${BREW_DIR}/bin:$PATH"
+#export MANPATH="${BREW_DIR}/share/man:$MANPATH"
+#export INFOPATH="${BREW_DIR}/share/info:$INFOPATH"
+
+# Add NeoVim to PATH
+export NEOVIM_DIR="/scratch/arch/${ARCH}/opt/neovim"
+export VIMRUNTIME="${NEOVIM_DIR}/share/nvim/runtime"
+# alias nvim='TERM=gnome-256color nvim'
+prepend_to_path "${NEOVIM_DIR}/bin"
+# PATH="${NEOVIM_DIR}/bin:${PATH}"
+
+## Firefox installation
+## PATH="/scratch/firefox/:${PATH}"
+
+## zsh installation
+#export ZSH_DIR="/scratch/arch/${ARCH}/opt/zsh-5.0.7"
+#export PATH="${ZSH_DIR}/bin:${PATH}"
+#MANPATH="${ZSH_DIR}/share/man:${MANPATH}"
+
+# HDF5 installation
+# Add HDF5 libraries to the LD_LIBRARY_PATH
+# HDF_DIR is required to be specified for local installations of genomedata
+# export HDF5_DIR="/scratch/arch/${ARCH}/opt/hdf5-1.8.16"
+# export LD_LIBRARY_PATH="${HDF5_DIR}/lib:${LD_LIBRARY_PATH}"
+# # We need the HDF5 binaries on our path (genomedata tests fail otherwise)
+# prepend_to_path "${HDF5_DIR}/bin"
+# export PATH="${HDF5_DIR}/bin:${PATH}"
+
+# Python 3.6.4 installation
+export PYTHON36_DIR="/scratch/arch/${ARCH}/opt/python-3.6.5"
+prepend_to_path "${PYTHON36_DIR}/bin:${PYTHON36_DIR}/script:${HOME}/.local/bin"
+# Take off to stop messing with GDB when debugging in conda env
+# (GDB looks for this library instead of conda's)
+# LD_LIBRARY_PATH="${PYTHON36_DIR}/lib:${LD_LIBRARY_PATH}"
+# C_INCLUDE_PATH="${PYTHON36_DIR}/include"
+
+
+# Python 2.7.14 installation (put it before python 3 on the path)
+export PYTHON27_DIR="/scratch/arch/${ARCH}/opt/python-2.7.15"
+prepend_to_path "${PYTHON27_DIR}/bin:${PYTHON27_DIR}/script:${HOME}/.local/bin"
+# Take off to stop messing with GDB when debugging in conda env
+# (GDB looks for this library instead of conda's)
+# LD_LIBRARY_PATH="${PYTHON27_DIR}/lib:${LD_LIBRARY_PATH}"
+C_INCLUDE_PATH="${PYTHON27_DIR}/include"
+#export PYTHONPATH="${HOME}/.local/lib/python2.7"
+
+## Htop installation
+export HTOP_DIR="/scratch/arch/${ARCH}/opt/htop-2.0.1"
+prepend_to_path "${HTOP_DIR}/bin"
+# PATH="${HTOP_DIR}/bin:${PATH}"
+
+# ## GNU Parallel installation
+# export PARALLEL_DIR="/scratch/arch/${ARCH}/opt/parallel-20180322"
+# prepend_to_path "${PARALLEL_DIR}/bin"
+
+## Java installation
+#export JAVA_DIR="/scratch/arch/${ARCH}/opt/jre1.8.0_60"
+#PATH="${JAVA_DIR}/bin:${PATH}"
+#LD_LIBRARY_PATH="${JAVA_DIR}/lib:${LD_LIBRARY_PATH}"
+
+## Lua installation
+#export LUA_DIR="/scratch/arch/${ARCH}/opt/lua-5.3.0"
+##export LUA_DIR="/scratch/lua-5.3.0"
+#PATH="${LUA_DIR}/bin:${PATH}" # Lua installs into it's src dir (no configure)
+#C_INCLUDE_PATH="${LUA_DIR}/include:${C_INCLUDE_PATH}"
+#LD_LIBRARY_PATH="${LUA_DIR}/lib:${LD_LIBRARY_PATH}"
+#export PKG_CONFIG_PATH="${LUA_DIR}/lib/pkgconfig"
+
+# xclip installation (for neovim clipboard support)
+export XCLIP_DIR="/scratch/arch/${ARCH}/opt/xclip-0.13"
+PATH="${XCLIP_DIR}/bin:${PATH}"
+
+## xsl installation (for neovim clipboard support)
+#export XSEL_DIR="/scratch/arch/${ARCH}/opt/xsel-1.2.0"
+#PATH="${XSEL_DIR}/bin:${PATH}"
+#MANPATH="${XSEL_DIR}/share/man:${MANPATH}"
+#
+### GMTK installation
+##GMTK_LOGP="${GMTK_LOGP:-}"
+##GMTK_DEV="${GMTK_DEV:-}"
+##if [ "$GMTK_LOGP" ]; then
+##    export GMTK_DIR="/scratch/arch/${ARCH}/opt/gmtk-1.0.1-logp"
+##    PATH="${GMTK_DIR}/bin:${PATH}"
+##elif [ "$GMTK_DEV" ]; then
+##    export GMTK_DIR="/scratch/arch/${ARCH}/opt/gmtk-1.0.1-dev"
+##    PATH="${GMTK_DIR}/bin:${PATH}"
+##else
+##    #export GMTK_DIR="/scratch/arch/${ARCH}/opt/gmtk-1.0.1"
+##    #export GMTK_DIR="/scratch/arch/${ARCH}/opt/gmtk-1.1.0"
+##    #export GMTK_DIR="/scratch/arch/${ARCH}/opt/gmtk-1.3.2"
+##    #export GMTK_DIR="/scratch/arch/${ARCH}/opt/gmtk-1.4.0"
+## export GMTK_DIR="/scratch/arch/${ARCH}/opt/gmtk-1.4.3"
+#export GMTK_DIR="/scratch/arch/${ARCH}/opt/gmtk-1.4.4"
+#prepend_to_path "${GMTK_DIR}/bin"
+## PATH="${GMTK_DIR}/bin:${PATH}"
+##fi
+##
+
+# Reasonable segway settings
+export SEGWAY_NUM_LOCAL_JOBS=4
+
+## Latest autoconf installation
+#export AUTOCONF_DIR="/scratch/arch/${ARCH}/opt/autoconf-2.69"
+#PATH="${AUTOCONF_DIR}/bin:${PATH}"
+#
+## Latest libtool installation
+#export LIBTOOL_DIR="/scratch/arch/${ARCH}/opt/libtool-2.4.6"
+#PATH="${LIBTOOL_DIR}/bin:${PATH}"
+#LD_LIBRARY_PATH="${LIBTOOL_DIR}/lib:${LD_LIBRARY_PATH}"
+#
+## Latest automake installation - doesn't work with ticket161-2 of GMTK
+#export AUTOMAKE_DIR="/scratch/arch/${ARCH}/opt/automake-1.14.1"
+#PATH="${AUTOMAKE_DIR}/bin:${PATH}"
+#
+## Qemu installation
+#export QEMU_DIR="/scratch/arch/${ARCH}/opt/qemu"
+#PATH="${QEMU_DIR}/bin:${PATH}"
+#C_INCLUDE_PATH="${QEMU_DIR}/include:${C_INCLUDE_PATH}"
+
+## Latest ruby installation
+#export RUBY_DIR="/scratch/arch/${ARCH}/opt/ruby-2.1.2"
+#PATH="${RUBY_DIR}/bin:${PATH}"
+
+# # Latest elixir installation
+# # export ELIXIR_DIR="/scratch/elixir-1.2.3"
+# # export ELIXIR_DIR="/scratch/elixir-1.3.4"
+# # export ELIXIR_DIR="/scratch/elixir-1.5.0"
+# export ELIXIR_DIR="/scratch/elixir-1.6.1"
+# prepend_to_path "${ELIXIR_DIR}/bin"
+# # PATH="${ELIXIR_DIR}/bin:${PATH}"
+
+# # Latest Erlang installation
+# # export ERLANG_DIR="/scratch/arch/${ARCH}/opt/otp_18.2.1"
+# # export ERLANG_DIR="/scratch/arch/${ARCH}/opt/otp_20.0"
+# export ERLANG_DIR="/scratch/arch/${ARCH}/opt/otp_20.2"
+# prepend_to_path "${ERLANG_DIR}/bin"
+# # PATH="${ERLANG_DIR}/bin:${PATH}"
+
+# # Latest NPM/Node installation
+# export NODE_DIR="/scratch/node-v6.2.1-linux-x64"
+# prepend_to_path "${NODE_DIR}/bin"
+# # PATH="${NODE_DIR}/bin:${PATH}"
+
+## Latest racket installation
+#export RACKET_DIR="/scratch/arch/${ARCH}/opt/racket-6.2"
+#PATH="${RACKET_DIR}/bin:${PATH}"
+#LD_LIBRARY_PATH="${RACKET_DIR}/lib:${LD_LIBRARY_PATH}"
+#C_INCLUDE_PATH="${RACKET_DIR}/include:${C_INCLUDE_PATH}"
+#MANPATH="${RACKET_DIR}/share/man:$MANPATH"
+#
+
+# Latest R installation
+# export R_DIR="/scratch/arch/${ARCH}/opt/R-3.2.1"
+# export R_DIR="/scratch/arch/${ARCH}/opt/R-3.3.1"
+# prepend_to_path "${R_DIR}/bin"
+# # PATH="${R_DIR}/bin:${PATH}"
+# # add_to_library_path "${R_DIR}/lib64/R/lib"
+# # LD_LIBRARY_PATH="${R_DIR}/lib64/R/lib:${LD_LIBRARY_PATH}"
+# C_INCLUDE_PATH="${R_DIR}/lib64/R/include:${C_INCLUDE_PATH}"
+
+# GraphViz installation
+# export GRAPHVIZ_DIR="/scratch/arch/${ARCH}/opt/graphviz-2.40.1"
+# prepend_to_path "${GRAPHVIZ_DIR}/bin"
+# # PATH="${GRAPHVIZ_DIR}/bin:${PATH}"
+# # THIS IS PROBABLY GOING TO BREAK GRAPHVIZ by removing lib path - should just remove
+# # add_to_library_path "${GRAPHVIZ_DIR}/lib"
+# # LD_LIBRARY_PATH="${GRAPHVIZ_DIR}/lib:${LD_LIBRARY_PATH}"
+# C_INCLUDE_PATH="${GRAPHVIZ_DIR}/include:${C_INCLUDE_PATH}"
+# PKG_CONFIG_PATH="${GRAPHVIZ_DIR}/lib/pkgconfig:${PKG_CONFIG_PATH}"
+
+# Harfbuzz installation
+# export HARFBUZZ_DIR="/scratch/arch/${ARCH}/opt/harfbuzz-1.7.1"
+# prepend_to_path "${HARFBUZZ_DIR}/bin"
+# LD_LIBRARY_PATH="${HARFBUZZ_DIR}/lib:${LD_LIBRARY_PATH}"
+# C_INCLUDE_PATH="${HARFBUZZ_DIR}/include:${C_INCLUDE_PATH}"
+# PKG_CONFIG_PATH="${HARFBUZZ_DIR}/lib/pkgconfig:${PKG_CONFIG_PATH}"
+
+# # GLFW installation
+# export GLFW_DIR="/scratch/arch/${ARCH}/opt/glfw-3.2.1/usr/local"
+# LD_LIBRARY_PATH="${GLFW_DIR}/lib:${LD_LIBRARY_PATH}"
+# LIBRARY_PATH="${GLFW_DIR}/lib:${LIBRARY_PATH}"
+# C_INCLUDE_PATH="${GLFW_DIR}/include:${C_INCLUDE_PATH}"
+# PKG_CONFIG_PATH="${GLFW_DIR}/lib/pkgconfig:${PKG_CONFIG_PATH}"
+
+# # libunistring installation
+# export UNISTRING_DIR="/scratch/arch/${ARCH}/opt/libunistring-0.9.7"
+# LD_LIBRARY_PATH="${UNISTRING_DIR}/lib:${LD_LIBRARY_PATH}"
+# LIBRARY_PATH="${UNISTRING_DIR}/lib:${LIBRARY_PATH}"
+# C_INCLUDE_PATH="${UNISTRING_DIR}/include:${C_INCLUDE_PATH}"
+
+# TODO: Fix LIBRARY_PATH containing trailing ":" which includes cwd
+
+# GCC installation
+# # This GCC installation will only build 64 bit binaries
+# export GCC_DIR="/scratch/arch/${ARCH}/opt/gcc-7.2.0"
+# prepend_to_path "${GCC_DIR}/bin"
+# LIBRARY_PATH="${GCC_DIR}/lib64:${GCC_DIR}/lib:${LIBRARY_PATH}"
+# LD_LIBRARY_PATH="${GCC_DIR}/libexec:${GCC_DIR}/lib64:${LD_LIBRARY_PATH}"
+# C_INCLUDE_PATH="${GCC_DIR}/include:${C_INCLUDE_PATH}"
+
+# # Stack / Haskell installation
+# export STACK_DIR="/scratch/stack-1.5.1-linux-x86_64-static"
+# prepend_to_path "${STACK_DIR}"
+# # GHC / Haskell
+# export GHC_DIR="~/.stack/programs/x86_64-linux/ghc-8.0.2"
+# prepend_to_path "${GHC_DIR}/bin"
+
+
+# AG - The silver searcher
+# export AG_DIR="/scratch/arch/${ARCH}/opt/ag"
+# PATH="${AG_DIR}/bin:${PATH}"
+
+# Ripgrep - A faster searcher
+export RG_DIR="/scratch/ripgrep-0.8.1-x86_64-unknown-linux-musl"
+prepend_to_path "${RG_DIR}"
+# PATH="${RG_DIR}:${PATH}"
+MANPATH="/scratch/ripgrep-0.8.1-x86_64-unknown-linux-musl:${MANPATH}"
+source "$RG_DIR/complete/rg.bash"
+
+# QCachegrind (call graph viewer)
+# prepend_to_path "/scratch/kcachegrind-0.7.4/qcachegrind"
+# PATH="/scratch/kcachegrind-0.7.4/qcachegrind:${PATH}"
+
+# ST (suckless terminal)
+export ST_DIR="/scratch/st-0.8.1"
+prepend_to_path "${ST_DIR}"
+MANPATH="${ST_DIR}/share/man:${MANPATH}"
+
+# DWM (suckless dynamic window manager)
+export DWM_DIR="/scratch/dwm-6.1"
+prepend_to_path "${DWM_DIR}"
+MANPATH="${DMW_DIR}/share/man:${MANPATH}"
+
+# DMENU (suckless menu for dwm)
+export DMENU_DIR="/scratch/dmenu-4.8"
+prepend_to_path "${DMENU_DIR}"
+MANPATH="${DMENU_DIR}/share/man:${MANPATH}"
+
+# QT5 Install (?)
+# add_to_library_path "/scratch/Qt/5.5/gcc_
+# LD_LIBRARY_PATH="/scratch/Qt/5.5/gcc_64/lib:${LD_LIBRARY_PATH}"
+
+## Workrave
+#export WORKRAVE_DIR="/scratch/arch/${ARCH}/opt/workrave-1.9.4"
+#PATH="${WORKRAVE_DIR}/bin:${PATH}"
+#
+## CMAKE
+#export CMAKE_DIR="/scratch/cmake-2.8.12.2-Linux-i386"
+#PATH="${CMAKE_DIR}/bin:${PATH}"
+
+# wxWidgets
+# XXX: Newer versions do not work with Erlang/OTP
+# export WXWIDGETS_DIR="/scratch/arch/${ARCH}/opt/wxWidgets-3.1.0"
+# export WXWIDGETS_DIR="/scratch/arch/${ARCH}/opt/wxWidgets-3.0.3"
+# prepend_to_path "${WXWIDGETS_DIR}/bin"
+# # WX_WIDGETS IS WILL BREAK BECAUSE OF REMOVING THIS, put back later?
+# # add_to_library_path "${WXWIDGETS_DIR}/lib"
+# # LD_LIBRARY_PATH="${WXWIDGETS_DIR}/lib:${LD_LIBRARY_PATH}"
+# C_INCLUDE_PATH="${WXWIDGETS_DIR}/include:${C_INCLUDE_PATH}"
+
+## LaTeX
+export LATEX_DIR="/scratch/arch/${ARCH}/opt/texlive"
+export TEXLIVE_INSTALL_PREFIX=${LATEX_DIR}
+export INFOPATH="${LATEX_DIR}/2018/texmf-dist/doc/info:${INFOPATH}"
+MANPATH="${LATEX_DIR}/2018/texmf-dist/doc/man:${MANPATH}"
+prepend_to_path "${LATEX_DIR}/2018/bin/x86_64-linux"
+# PATH="/scratch/arch/${ARCH}/opt/texlive/2015/bin/x86_64-linux:${PATH}"
+
+# Bedtools
+# prepend_to_path "/scratch/bedtools2/bin"
+# PATH="/scratch/bedtools2/bin:${PATH}"
+
+# Mendeley
+# prepend_to_path "/scratch/mendeleydesktop-1.16.3-linux-x86_64/bin"
+# PATH="/scratch/mendeleydesktop-1.16.3-linux-x86_64/bin:${PATH}"
+
+# Rust
+# prepend_to_path "${HOME}/.cargo/bin"
+# PATH="${HOME}/.cargo/bin:${PATH}"
+
+# Bibtool
+# prepend_to_path "/scratch/BibTool"
+
+# RTV Settings
+# export RTV_EDITOR="nvr --remote-wait-silent"
+
+# Weechat (IRC)
+# export WEECHAT_DIR="/scratch/arch/${ARCH}/opt/weechat-2.0.1"
+# prepend_to_path "${WEECHAT_DIR}/bin"
+
+# added by Anaconda2 4.4.0 installer
+# export PATH="/scratch/anaconda2/bin:$PATH"
+
+#
+## Hoff Utils (scripts)
+#PATH="/scratch/hoffutils/bin:${PATH}"
+#
+#export MANPATH
+#
+
+# Virtualenv functions
+function startvenv() { 
+    if [ -z $1 ] ; then
+        echo "usage: startvenv virtualenvname"
+    else
+        source /scratch/virtenv/$1/bin/activate
+    fi
+}
+
+# Tarball DL, extract, and del
+function dlextdel() {
+    output="dlextdel.tmp"
+    wget $1 -O $output
+    tar -xf $output
+    rm $output
+}
+
+# Enable Fuzzy Finder
+[ -f ~/.fzf.bash ] && source ~/.fzf.bash
+# Use ripgrep as the default command for fuzzy finder
+export FZF_DEFAULT_COMMAND="rg --files --follow"
+# When autocompleting a file to use in terminal, provide a preview window of
+# contents regardless if it is gzipped or not
+# If there's only 1 option, automaticall select it, if there is none,
+# automatically exit
+export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+export FZF_CTRL_T_OPTS="--preview 'zcat -f {} | head -100' --select-1"
+# # export FZF_CTRL_T_OPTS="--preview 'zless {} | head'"
+# # export FZF_CTRL_T_OPTS="--select-1 --exit-0"
+
+# added by Miniconda2 installer
+export PATH="/scratch/miniconda2/bin:$PATH"
+# Add conda autocompletion
+# Does not work
+# eval "$(register-python-argcomplete conda)"
