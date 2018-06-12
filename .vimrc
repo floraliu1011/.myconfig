@@ -35,6 +35,9 @@
     " airline at the bottom
     Plug 'vim-airline/vim-airline'  
 
+    " airline themes 
+    Plug 'vim-airline/vim-airline-themes'
+
     " allowing unix command (with capital) in vim 
     Plug 'tpope/vim-eunuch'
 
@@ -54,13 +57,36 @@
     Plug 'terryma/vim-multiple-cursors'
 
     " Auto code inspection
-    Plugin 'w0rp/ale'
+    Plug 'w0rp/ale'
+    
+    " Swap windows with <leader>ww
+    Plug 'wesQ3/vim-windowswap'
+
+    " Git diff in sign column
+    Plug 'airblade/vim-gitgutter'
+    
+    " Separate buffer for stage and commit
+    Plug 'jreybert/vimagit'
+    
+    " highlight trailing whitespace (remove by :FixWhitespace
+    Plug 'bronson/vim-trailing-whitespace'
+
+    " autocomplete brackets
+    Plug 'Raimondi/delimitMate'
+
+    " block comment 
+    Plug 'tpope/vim-commentary'
+
+    " autocomplete prompt
+    Plug 'vim-scripts/AutoComplPop'
+
 	" }
   
 
 	" Languages {
     " Plugins for language support
-	    
+	  Plug 'sheerun/vim-polyglot'
+
     " R plugins {
 	        " Turn vim into R IDE
           Plug 'jalvesaq/Nvim-R'
@@ -87,34 +113,40 @@
 " }
 
 " User Interface {
-"
-    " config of the lightline
-    let g:lightline = {
-          \ 'colorscheme': 'wombat',
-          \ 'active': {
-          \   'left': [ [ 'mode', 'paste' ],
-          \             [ 'gitbranch', 'readonly', 'filename', 'modified' ] ]
-          \ },
-          \ 'component_function': {
-          \   'gitbranch': 'fugitive#head'
-          \ },
-          \ }
-    
-    " Open NerdTree when start
-    autocmd vimenter * NERDTree
+      
+      " airline {
+      let g:airline_theme='light theme'
 
-    " Autometically open Nerdtree when start with no dir opened
-    autocmd StdinReadPre * let s:std_in=1
-    autocmd VimEnter * if argc() == 0 && !exists("s:std_in") | NERDTree | endif
-    
-    " Autometically open NerdTree when open a directory
-    autocmd StdinReadPre * let s:std_in=1
-    autocmd VimEnter * if argc() == 1 && isdirectory(argv()[0]) && !exists("s:std_in") | exe 'NERDTree' argv()[0] | wincmd p | ene | endif
-    
-    " close vim if the only window left open is a NERDTree
-    autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
-    
+      " }
 
+      " NERDTree {
+        " Open NerdTree when start
+        autocmd vimenter * NERDTree
+
+        "  Autometically open Nerdtree when start with no dir opened
+        autocmd StdinReadPre * let s:std_in=1
+        autocmd VimEnter * if argc() == 0 && !exists("s:std_in") | NERDTree | endif
+    
+        " Autometically open NerdTree when open a directory
+        autocmd StdinReadPre * let s:std_in=1
+        autocmd VimEnter * if argc() == 1 && isdirectory(argv()[0]) && !exists("s:std_in") | exe 'NERDTree' argv()[0] | wincmd p | ene | endif
+    
+        " close vim if the only window left open is a NERDTree
+        autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
+    
+    " }
+    
+    " indentLine {
+        " choose indent character
+        let g:indentLine_char = '¦'
+
+    " }    
+
+
+    " set cursorline  highlight current line
+    hi CursorLine guibg=#ffffff     " highlight bg color of current line
+    hi CursorColumn guibg=#333333   " highlight cursor
+ 
 
 " }
 "
@@ -122,6 +154,8 @@
     
     " Basic keymaps {
     
+    " Keymaps for daily usage
+
     " ,y and ,p allow copy and paste between different vim sessions
     vmap <silent> ,y y:new<CR>:call setline(1,getregtype())<CR>o<Esc>P:wq! ~/reg.txt<CR>
     nmap <silent> ,y :new<CR>:call setline(1,getregtype())<CR>o<Esc>P:wq! ~/reg.txt<CR>
@@ -137,7 +171,7 @@
             " invoking fzf
             map ; :Files<CR>
         " }
-        "
+        
         " Nvim-R {
         " Mapping , and ,e to send one line to R session
         " remapping the basic :: send line
@@ -148,9 +182,16 @@
         vmap ,e <Plug>RESendSelection
         " }
         
+        " gitgutter {
+          " default keymaps in gitgutters
+          nmap ]c <Plug>GitGutterNextHunk
+          nmap [c <Plug>GitGutterPrevHunk
+          nmap <Leader>hs <Plug>GitGutterStageHunk
+          nmap <Leader>hu <Plug>GitGutterUndoHunk
+        " }
         " NerdTree {
         " Toggle NerdTree by bunching Ctrl+t
-        map <C-n> :NERDTreeToggle<CR>
+        map <C-t> :NERDTreeToggle<CR>
 
         "}
     " }
