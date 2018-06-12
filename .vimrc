@@ -115,7 +115,7 @@
 " User Interface {
       
       " airline {
-      let g:airline_theme='light theme'
+      let g:airline_theme='light'
 
       " }
 
@@ -142,12 +142,11 @@
 
     " }    
 
+    "" set cursorline                  " highlight current line
 
-    " set cursorline  highlight current line
     hi CursorLine guibg=#ffffff     " highlight bg color of current line
     hi CursorColumn guibg=#333333   " highlight cursor
- 
-
+    hi TermCursor ctermfg=red       " TODO: Fixthis
 " }
 "
 " Keymaps {
@@ -180,6 +179,8 @@
         vmap , <Plug>RDSendSelection
         " " remapping selection :: send multiple lines + echo lines
         vmap ,e <Plug>RESendSelection
+        "disable auto inserting <-
+        let vimrplugin_assign = 0
         " }
         
         " gitgutter {
@@ -195,4 +196,11 @@
 
         "}
     " }
+" }
+"
+" Plugin configuration {
+        " NERDTree {
+        " always show dot files in
+        let NERDTreeShowHidden=1
+        " }
 " }
