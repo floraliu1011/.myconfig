@@ -147,6 +147,9 @@
 
     " smooth scrolling
     Plug 'yuttie/comfortable-motion.vim'
+
+    " easy motion (lots of shortcuts
+    Plug '/easymotion/vim-easymotion'
     
     " " easy align
     " Plugin 'junegunn/vim-easy-align'
@@ -173,9 +176,9 @@
       " }
       "
       " HTML plugins {
-      " Auto tag completion by emmet <c-y>,
-      Plug 'mattn/emmet-vim'
-      "
+      " Auto tag completion by sparkup <c-e>,
+      Plug '/rstacruz/sparkup'
+
       " Open a browser to preview markdown files
       Plug 'suan/vim-instant-markdown', {'do': 'npm install -g instant-markdown-d'}
 
@@ -218,6 +221,8 @@
       let g:airline_powerline_fonts = 1
       let g:airline_section_b = '%{getcwd()}'
       let g:airline#extensions#branch#enabled = 1
+      let g:airline#extensions#ale#enabled = 1
+
 
     " }
 
@@ -281,6 +286,8 @@
     " Basic keymaps {
     
     " Keymaps for daily usage
+    " Remap the <leader> key to ;
+    let mapleader = ";"
     
     " ,y and ,p allow copy and paste between different vim sessions
     vmap <silent> ,y y:new<CR>:call setline(1,getregtype())<CR>o<Esc>P:wq! ~/reg.txt<CR>
@@ -323,7 +330,7 @@
         
         " fzf {
             " invoking fzf
-            map ; :Files<CR>
+            map ' :Files<CR>
         " }
         
         " Nvim-R {
@@ -373,6 +380,11 @@
               endfunction
 
               command! ProjectFiles execute 'Files' s:find_home()
+        "}
+        
+        "ALE {
+              " allow hovering the lint
+              let g:ale_set_balloons=1
         "}
 " }
 
