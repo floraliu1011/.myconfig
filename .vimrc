@@ -24,6 +24,8 @@
 
     set backspace=2   " Backspace deletes like most programs in insert mode
     set noswapfile    " http://robots.thoughtbot.com/post/18739402579/global-gitignore#comment-458413287
+    set nobackup
+    set nowritebackup
     set history=100
     set ruler         " show the cursor position all the time
     set showcmd       " display incomplete command
@@ -138,11 +140,17 @@
     Plug 'Raimondi/delimitMate'
 
     " [8] Diary, notes, whatever. It's amazing
-    Plug 'vimwiki/vimwiki'
+    Plug '/tomtom/tcomment_vim'
     
     " block comment 
     Plug 'tpope/vim-commentary'
 
+    " smooth scrolling
+    Plug 'yuttie/comfortable-motion.vim'
+    
+    " " easy align
+    " Plugin 'junegunn/vim-easy-align'
+    
     " Snips -- use SnipMate for snip engine
     Plug 'MarcWeber/vim-addon-mw-utils'
     Plug 'tomtom/tlib_vim'
@@ -208,7 +216,10 @@
       let g:airline_theme='light'
       
       let g:airline_powerline_fonts = 1
-      " }
+      let g:airline_section_b = '%{getcwd()}'
+      let g:airline#extensions#branch#enabled = 1
+
+    " }
 
      " colorscheme {
         " choose a colorscheme
