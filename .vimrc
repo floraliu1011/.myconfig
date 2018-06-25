@@ -171,6 +171,10 @@
     " autocomplete prompt
     Plug 'vim-scripts/AutoComplPop'
 
+    " rename the current buffers
+    Plug 'danro/rename'
+
+
 	" }
 
 
@@ -190,6 +194,8 @@
       " Open a browser to preview markdown files
       Plug 'suan/vim-instant-markdown', {'do': 'npm install -g instant-markdown-d'}
 
+      " easily surround stuff
+      Plug 'tpope/vim-surround'
       " }
 
 
