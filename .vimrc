@@ -6,18 +6,20 @@
     " use vim setting instead of Vi setting
     " better to be as early as possible since it has side effect
     set nocompatible
+    set hidden
 
     " Attempt to make airline to work
     set t_Co=256
 
     set encoding=utf-8
+
 " }
 
 " General {
 
     "Allow usage of mouse in iTerm
     set ttyfast
-    set mouse=a
+    set mouse
 
     "Allow wrapping of cursor keys
     set whichwrap+=<,>,h,l,[,]
@@ -44,6 +46,7 @@
 
     " Editing {
 
+        filetype plugin on
         filetype plugin indent on
 
         " fix the stupid backspace
@@ -105,20 +108,52 @@
         " Tmux status line
         Plug 'edkolev/tmuxline.vim'
 
+        " Vertical line to show vertical alignment and identation
+        Plug 'Yggdroot/indentLine', { 'on': 'IndentLinesEnable' }
+
+
+    " }
+    
+    " Editing {
+
+    " visually show marks 
+    Plug 'vim-scripts/ShowMarks'
+
+    " Autocompletion by YouCompleteMe
+    Plug 'Valloric/YouCompleteMe'
+
+    " }
+    
+    " Functional extensions {
+
+      " fuzzy search with fzf
+      Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
+      Plug 'junegunn/fzf.vim'
+      
+      " fuzzy inline searching with incsearch
+      Plug 'haya14busa/incsearch.vim'
+      
+      " incsearch integration with ezmotion
+      Plug 'haya14busa/incsearch-easymotion.vim'
+
+      " File explorer
+      Plug 'scrooloose/nerdtree'
+
+      " Undo tree
+      Plug 'mbbill/undotree'
+      
+      " TagBar
+      Plug 'majutsushi/tagbar'
+
+      " see the keymaps
+      Plug 'liuchengxu/vim-which-key', { 'on': ['WhichKey', 'WhichKey!'] }
+
+    "
     " }
 
-    " fuzzy search with fzf
-    Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
-    Plug 'junegunn/fzf.vim'
 
     " allowing unix command (with capital) in vim
     Plug 'tpope/vim-eunuch'
-
-    " Vertical line to show vertical alignment and identation
-    Plug 'Yggdroot/indentLine', { 'on': 'IndentLinesEnable' }
-
-    " File explorer
-    Plug 'scrooloose/nerdtree'
 
     " Turn vim into excel
     Plug 'chrisbra/csv.vim'
@@ -134,9 +169,6 @@
 
     " Git diff in sign column
     Plug 'airblade/vim-gitgutter'
-
-    " Separate buffer for stage and commit
-    Plug 'jreybert/vimagit'
 
     " Git wrapper for vim
     Plug 'tpope/vim-fugitive'
@@ -160,20 +192,13 @@
     Plug 'easymotion/vim-easymotion'
 
     " " easy align
-    " Plugin 'junegunn/vim-easy-align'
+    Plug 'junegunn/vim-easy-align'
 
     " Snips -- use SnipMate for snip engine
     Plug 'MarcWeber/vim-addon-mw-utils'
     Plug 'tomtom/tlib_vim'
     Plug 'garbas/vim-snipmate'
     Plug 'honza/vim-snippets'
-
-    " autocomplete prompt
-    Plug 'vim-scripts/AutoComplPop'
-
-    " rename the current buffers
-    Plug 'danro/rename'
-
 
 	" }
 
@@ -184,18 +209,34 @@
 
     " R plugins {
 	        " Turn vim into R IDE
-          Plug 'jalvesaq/Nvim-R'
+          Plug 'jalvesaq/Nvim-R' 
       " }
-      "
+      
       " HTML plugins {
       " Auto tag completion by sparkup <c-e>,
       Plug 'rstacruz/sparkup'
 
       " Open a browser to preview markdown files
-      Plug 'suan/vim-instant-markdown', {'do': 'npm install -g instant-markdown-d'}
+			function! BuildComposer(info)
+				if a:info.status != 'unchanged' || a:info.force
+					if has('nvim')
+						!cargo build --release
+					else
+						!cargo build --release --no-default-features --features json-rpc
+					endif
+				endif
+			endfunction
+
+			Plug 'euclio/vim-markdown-composer', { 'do': function('BuildComposer') }
 
       " easily surround stuff
       Plug 'tpope/vim-surround'
+      " }
+      
+      " Python plugins {
+      " construct python IDE by python-mode
+      Plug 'python-mode/python-mode', { 'branch': 'develop', 'for': 'python' }
+
       " }
 
 
@@ -228,11 +269,17 @@
     autocmd InsertEnter * call ToggleRelativeOn()
     autocmd InsertLeave * call ToggleRelativeOn()
 
+    " set the appearance of the cursor line
+    g:set cursorline
+
       " airline {
       " airline theme
       let g:airline_theme='light'
 
-      let g:airline_powerline_fonts = 1
+      let g:airline#extensions#tabline#enabled = 1
+      let g:airline#extensions#tabline#left_sep = ' '
+      let g:airline#extensions#tabline#left_alt_sep = '|'
+      let g:airline_powerline_fonts = 0
       let g:airline_section_b = '%{getcwd()}'
       let g:airline#extensions#branch#enabled = 1
       let g:airline#extensions#ale#enabled = 1
@@ -262,10 +309,17 @@
           "let g:seoul256_background = 256
           "colo seoul256
        "  }
+     " }
+
+      " IndentLines {
+      " Turn on IndentLines when started
+      autocmd vimenter * IndentLines
+      " }
 
       " NERDTree {
         " Open NerdTree when start
         autocmd vimenter * NERDTree
+
 
         "  Autometically open Nerdtree when start with no dir opened
         autocmd StdinReadPre * let s:std_in=1
@@ -280,126 +334,27 @@
 
     " }
 
+    " Undo tree {
+        if has("persistent_undo")
+            set undodir=~/.undodir/
+            set undofile
+        endif
+    " }
+
     " indentLine {
        set expandtab
        set tabstop=2
        set shiftwidth=2
 
-       let g:indentLine_color_term = 239
-       let g:indentLine_char = 'c'
+       "let g:indentLine_color_term = 239
+       let g:indentLine_char = '¦'
     " }
 
-    "" set cursorline                  " highlight current line
+    set cursorline                  " highlight current line
 
-    hi CursorLine guibg=#ffffff     " highlight bg color of current line
-    hi CursorColumn guibg=#333333   " highlight cursor
-    hi TermCursor ctermfg=red       " TODO: Fixthis
-" }
-
-" }
-
-" Keymaps {
-
-    " Basic keymaps {
-
-        " Keymaps for daily usage
-        " Remap the <leader> key to ;
-        let mapleader = ";"
-
-        " ,y and ,p allow copy and paste between different vim sessions
-        vmap <silent> ,y y:new<CR>:call setline(1,getregtype())<CR>o<Esc>P:wq! ~/reg.txt<CR>
-        nmap <silent> ,y :new<CR>:call setline(1,getregtype())<CR>o<Esc>P:wq! ~/reg.txt<CR>
-        map <silent> ,p :sview ~/reg.txt<CR>"zdddG:q!<CR>:call setreg('"', @", @z)<CR>p
-        map <silent> ,P :sview ~/reg.txt<CR>"zdddG:q!<CR>:call setreg('"', @", @z)<CR>P
-
-        " Ctrl + direction to quickly switch between panes
-        noremap <C-l> <C-w>l
-        noremap <C-h> <C-w>h
-        noremap <C-j> <C-w>j
-        noremap <C-k> <C-w>k
-        nnoremap <S-H> gT
-        nnoremap <S-L> gt
-
-
-        "Map Ctrl + S to save in any mode
-        nnoremap <C-s> :update<CR>
-        vnoremap <C-s> :<esc>update<CR>
-        inoremap <C-s> :<esc>update<CR>
-
-        " Quickly close windows
-        nnoremap <leader>x :x<cr>
-        nnoremap <leader>X :q!<cr>
-
-        " resize panes
-        nnoremap <C->> :vertical resize +3<cr>
-        nnoremap <C-<> :vertical resize -3<cr>
-        nnoremap <C-+> :resize +3<cr>
-        nnoremap <C--> :resize -3<cr>
-
-        " Use tab to jump between blocks, because it's easier
-        nnoremap <tab> %
-        vnoremap <tab> %
-
-        " press <f7> to fix the indentation
-        map <F7> mzgg=G`z
-
-    " }
-
-        " Plugin Keymaps {
-
-            " easymotion {
-
-                nmap <silent>f <Plug>(easymotion-bd-w)
-            " }
-
-            " fzf {
-                " invoking fzf
-                map ' :Files<CR>
-            " }
-
-            " Nvim-R {
-                " Mapping , and ,e to send one line to R session
-                " remapping the basic :: send line
-                nmap <C-CR> <Plug>RDSendLine
-                " " remapping selection :: send multiple lines
-                vmap <C-CR> <Plug>RDSendSelection
-               "disable auto inserting <-
-                let vimrplugin_assign = 0
-            " }
-
-            " gitgutter {
-                " default keymaps in gitgutters
-                nmap ]c <Plug>GitGutterNextHunk
-                nmap [c <Plug>GitGutterPrevHunk
-                nmap <Leader>hs <Plug>GitGutterStageHunk
-                nmap <Leader>hu <Plug>GitGutterUndoHunk
-            " }
-
-            " NerdTree {
-                " Toggle NerdTree by bunching Ctrl+t
-                map <C-t> :NERDTreeToggle<CR>
-            "}
-
-            " SwapWindow {
-                let g:windowswap_map_keys = 0 "prevent default bindings
-                nnoremap <silent> <leader>yw :call WindowSwap#MarkWindowSwap()<CR>
-                nnoremap <silent> <leader>pw :call WindowSwap#DoWindowSwap()<CR>
-                nnoremap <silent> <leader>sw :call WindowSwap#EasyWindowSwap()<CR>
-            " }
-
-            " vimwiki {
-
-                " Lists
-                nmap <M-+> <Plug>VimwikiIncrementListItem
-                vmap <M-+> <Plug>VimwikiIncrementListItem
-                nmap <M--> <Plug>VimwikiDecrementListItem
-                vmap <M--> <Plug>VimwikiDecrementListItem
-
-                " checkboxes
-                nmap <Leader><Space> <Plug>VimwikiRemoveSingleCB
-            " }
-        " }
-    " }
+    " hi CursorLine guibg=#ffffff     " highlight bg color of current line
+    " hi CursorColumn guibg=#333333   " highlight cursor
+    " hi TermCursor ctermfg=red       " TODO: Fixthis
 " }
 
 " Aliases {
@@ -427,8 +382,9 @@
         " }
 
         " fzf {
+            " Let fzf start from the root
               function! s:find_home()
-                return system('/')
+                return system('~')
               endfunction
 
               command! ProjectFiles execute 'Files' s:find_home()
@@ -439,6 +395,152 @@
               let g:ale_set_balloons=1
         "}
 " }
+
+" Keymaps {
+
+    " Basic keymaps {
+
+        " Keymaps for daily usage
+        " Remap the <leader> key to ;
+        let mapleader = ";"
+
+        " ,y and ,p allow copy and paste between different vim sessions
+        vmap <silent> ,y y:new<CR>:call setline(1,getregtype())<CR>o<Esc>P:wq! ~/reg.txt<CR>
+        nmap <silent> ,y :new<CR>:call setline(1,getregtype())<CR>o<Esc>P:wq! ~/reg.txt<CR>
+        map <silent> ,p :sview ~/reg.txt<CR>"zdddG:q!<CR>:call setreg('"', @", @z)<CR>p
+        map <silent> ,P :sview ~/reg.txt<CR>"zdddG:q!<CR>:call setreg('"', @", @z)<CR>P
+
+        " Ctrl + direction to quickly switch between panes
+        noremap <S-l> <C-w>l
+        noremap <S-h> <C-w>h
+        noremap <S-j> <C-w>j
+        noremap <S-k> <C-w>k
+        nnoremap <C-H> gT
+        nnoremap <C-L> gt
+
+
+        "Map Ctrl + S to save in any mode
+        nnoremap <C-s> :update<CR>
+        vnoremap <C-s> :<esc>update<CR>
+        inoremap <C-s> :<esc>update<CR>
+
+        " Quickly close windows
+        nnoremap <C-x> :x<cr>
+        " nnoremap <leader>X :q!<cr>
+
+        " resize panes
+        nnoremap - :<esc><C-w>-
+        nnoremap + :<esc><C-w>+
+        nnoremap ( :<esc><C-w>>
+        nnoremap ) :<esc><C-w><
+
+        " Use tab to jump between blocks, because it's easier
+        nnoremap <tab> %
+        vnoremap <tab> %
+
+        " press <f7> to fix the indentation
+        map <F7> mzgg=G`z
+
+    " }
+
+        " Plugin Keymaps {
+        "
+        " functional extention {
+
+            " all uses leader key , + plugin initials 
+            " NerdTree {
+                " Toggle NerdTree by bunching Ctrl+t
+                nnoremap ,n :NERDTreeToggle<CR>
+            "}
+
+            " Undo Tree {
+                " Use C-u to toggle the undo tree
+                nnoremap ,u :UndotreeToggle<cr>
+            " }
+
+            " Tagbar {
+                " Toggle tagbar
+                nnoremap ,t :TagbarToggle<cr>
+            "}
+
+            " fzf {
+                " invoking fzf
+                map ,f :Files ~<CR>
+            " }
+
+          "
+        " }
+
+            " easymotion {
+
+                nmap <silent>f <Plug>(easymotion-bd-w)
+            " }
+
+            " incsearch {
+                map /  <Plug>(incsearch-forward)
+                map ?  <Plug>(incsearch-backward)
+                map g/ <Plug>(incsearch-stay)
+                " :h g:incsearch#auto_nohlsearch
+                " set hlsearch
+                let g:incsearch#auto_nohlsearch = 1
+                map n  <Plug>(incsearch-nohl-n)
+                map N  <Plug>(incsearch-nohl-N)
+                map *  <Plug>(incsearch-nohl-*)
+                map #  <Plug>(incsearch-nohl-#)
+                map g* <Plug>(incsearch-nohl-g*)
+                map g# <Plug>(incsearch-nohl-g#)
+            " }
+            "
+            " incsearch-ezmotion {
+                
+                map z/ <Plug>(incsearch-easymotion-/)
+                map z? <Plug>(incsearch-easymotion-?)
+                map zg/ <Plug>(incsearch-easymotion-stay)
+            " }
+
+            " Nvim-R {
+                " Mapping , and ,e to send one line to R session
+                " remapping the basic :: send line
+                nmap <C-CR> <Plug>RDSendLine
+                " " remapping selection :: send multiple lines
+                vmap <C-CR> <Plug>RDSendSelection
+               "disable auto inserting <-
+                let vimrplugin_assign = 0
+            " }
+
+            " gitgutter {
+                " default keymaps in gitgutters
+                nmap ]c <Plug>GitGutterNextHunk
+                nmap [c <Plug>GitGutterPrevHunk
+                nmap <Leader>hs <Plug>GitGutterStageHunk
+                nmap <Leader>hu <Plug>GitGutterUndoHunk
+            " }
+
+            " SwapWindow {
+                let g:windowswap_map_keys = 0 "prevent default bindings
+                nnoremap <silent> <leader>yw :call WindowSwap#MarkWindowSwap()<CR>
+                nnoremap <silent> <leader>pw :call WindowSwap#DoWindowSwap()<CR>
+                nnoremap <silent> <leader>sw :call WindowSwap#EasyWindowSwap()<CR>
+            " }
+
+            " vimwiki {
+                " Change syntax to markdown
+                let g:vimwiki_list = [{'path': '~/vimwiki/',
+                                       \ 'syntax': 'markdown', 'ext': '.md'}]
+                
+                " Lists
+                nmap <M-+> <Plug>VimwikiIncrementListItem
+                vmap <M-+> <Plug>VimwikiIncrementListItem
+                nmap <M--> <Plug>VimwikiDecrementListItem
+                vmap <M--> <Plug>VimwikiDecrementListItem
+
+                " checkboxes
+                nmap <Leader><Space> <Plug>VimwikiRemoveSingleCB
+
+                
+            " }
+        " }
+    " }
 
 " " Quick .vimrc updating {
     " Source the vimrc file after saving it
@@ -454,4 +556,8 @@
     " Map opening the .vimrc
     exec "nnoremap <leader>` :e " . expand("<sfile>:p") . "<CR>"
 " }
+
+""" File Typle Config {
+autocmd BufEnter *.md :setlocal filetype=markdown
+"""}
 
