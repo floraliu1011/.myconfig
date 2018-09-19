@@ -235,7 +235,7 @@
       
       " Python plugins {
       " construct python IDE by python-mode
-      Plug 'python-mode/python-mode', { 'branch': 'develop', 'for': 'python' }
+      " Plug 'python-mode/python-mode', { 'branch': 'develop', 'for': 'python' }
 
       " }
 
