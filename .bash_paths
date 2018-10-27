@@ -1,0 +1,11 @@
+#!bin/bash/
+# paths for labwork
+export srcdir=$HOME/Github/connectome/Src
+export resultdir=$HOME/Github/connectome/Result
+export datadir=$HOME/Github/connectome/Data
+export workdir=Github/connectome
+export dropbox=~/Dropbox/_Connectomics_paper
+
+# paths for daily uses
+export windows=~/Home
+export UofT='~/Home/OneDrive - University of Toronto'
