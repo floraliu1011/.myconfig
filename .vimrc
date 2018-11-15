@@ -13,6 +13,8 @@
 
     set encoding=utf-8
 
+    let g:ycm_path_to_python_interpreter='/home/flora/miniconda3/bin/python3.7'
+
 " }
 
 " General {
@@ -43,6 +45,7 @@
     set smarttab
     set smartindent
     set autoindent
+
 
     " Editing {
 
@@ -111,17 +114,30 @@
         " Vertical line to show vertical alignment and identation
         Plug 'Yggdroot/indentLine', { 'on': 'IndentLinesEnable' }
 
+        " calendar integration
+        Plug 'itchyny/calendar.vim'
+
+        " cursor underwords
+        Plug 'itchyny/vim-cursorword'
 
     " }
     
     " Editing {
 
-    " visually show marks 
-    Plug 'vim-scripts/ShowMarks'
+        " visually show marks 
+        Plug 'vim-scripts/ShowMarks'
 
-    " Autocompletion by YouCompleteMe
-    Plug 'Valloric/YouCompleteMe'
+        " Autocompletion by YouCompleteMe
+        Plug 'Valloric/YouCompleteMe'
 
+        " improve built-in folding
+        Plug 'pseewald/vim-anyfold'
+
+        " text objects with indent level
+        Plug 'michaeljsmith/vim-indent-object'
+
+        " quick way of expanding nested folds
+        Plug 'arecarn/vim-fold-cycle'
     " }
     
     " Functional extensions {
@@ -144,6 +160,9 @@
       
       " TagBar
       Plug 'majutsushi/tagbar'
+
+      " Dictionary
+      Plug 'eschao/vim-dict'
 
       " see the keymaps
       Plug 'liuchengxu/vim-which-key', { 'on': ['WhichKey', 'WhichKey!'] }
@@ -270,7 +289,7 @@
     autocmd InsertLeave * call ToggleRelativeOn()
 
     " set the appearance of the cursor line
-    g:set cursorline
+    set cursorline
 
       " airline {
       " airline theme
@@ -373,7 +392,11 @@
 " }
 
 " Plugin configuration {
-        " NERDTree {
+" calendar {
+    let g:calendar_google_calendar = 1
+    let g:calendar_google_task = 1
+" }
+" NERDTree {
         " always show dot files in
         let NERDTreeShowHidden=1
 
@@ -394,6 +417,23 @@
               " allow hovering the lint
               let g:ale_set_balloons=1
         "}
+        
+        " AnyFold {
+              augroup anyfold
+                  autocmd!
+                  autocmd Filetype * AnyFoldActivate
+              augroup END
+
+              " disable anyfold for large files
+              let g:LargeFile = 1000000 " file is large if size greater than 1MB
+              autocmd BufReadPre,BufRead * let f=getfsize(expand("<afile>")) | if f > g:LargeFile || f == -2 | call LargeFile() | endif
+              function LargeFile()
+                  augroup anyfold
+                      autocmd! " remove AnyFoldActivate
+                      autocmd Filetype <filetype> setlocal foldmethod=indent " fall back to indent folding
+                  augroup END
+              endfunction
+        " }
 " }
 
 " Keymaps {
@@ -417,6 +457,8 @@
         noremap <S-k> <C-w>k
         nnoremap <C-H> gT
         nnoremap <C-L> gt
+        nnoremap <C-J> :bn<CR>
+        nnoremap <C-K> :bp<CR>
 
 
         "Map Ctrl + S to save in any mode
@@ -438,8 +480,8 @@
         nnoremap <tab> %
         vnoremap <tab> %
 
-        " press <f7> to fix the indentation
-        map <F7> mzgg=G`z
+        " exit terminal mode by pressing <esc>
+        tnoremap <Esc> <C-\><C-n>
 
     " }
 
@@ -447,7 +489,27 @@
         "
         " functional extention {
 
+        "
+        "   " use ,m to display all marks
+            nnoremap ,m :marks<CR>
+
+            "use ,r to display all registers
+            nnoremap ,r :reg <CR>
+
+            "use ,b to display and search buffers
+            nnoremap ,b :Buffers <CR>
             " all uses leader key , + plugin initials 
+            
+            " vim-dict {
+            nnoremap ,w :call dict#LookupCWord()<cr>
+            nnoremap ,d :call dict#LookupEnglish()<cr><Paste>
+						nnoremap ,e :call dict#LookupChinese()<cr>
+            " }
+
+            " Calendar {
+            nnoremap ,c :Calendar <CR>
+            " }
+
             " NerdTree {
                 " Toggle NerdTree by bunching Ctrl+t
                 nnoremap ,n :NERDTreeToggle<CR>
@@ -466,6 +528,8 @@
             " fzf {
                 " invoking fzf
                 map ,f :Files ~<CR>
+                " finding everywhere
+                nnoremap ,, :Ag<CR>
             " }
 
           "
@@ -525,8 +589,9 @@
 
             " vimwiki {
                 " Change syntax to markdown
-                let g:vimwiki_list = [{'path': '~/vimwiki/',
+                let g:vimwiki_list = [{'path': '~/Github/vimwiki/',
                                        \ 'syntax': 'markdown', 'ext': '.md'}]
+                let g:vimwiki_use_calendar = 1
                 
                 " Lists
                 nmap <M-+> <Plug>VimwikiIncrementListItem

@@ -1,4 +1,10 @@
 #!/bin/bash
+## anaconda aliases
+alias nb='jupyter notebook'
+alias ca='conda activate'
+
+## remote connection
+alias cslab='ssh liuyufan@teach.cs.toronto.edu'
 ## vim alias
 alias vim=nvim
 ## tmux alias
